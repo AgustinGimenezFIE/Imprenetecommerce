@@ -27,14 +27,3 @@ Permite administrar productos desde una interfaz tipo admin (`/admin`) y mostrar
 - Laravel 10+
 - Servidor que soporte Laravel (ej: Laravel Hosting Cloud en Donweb)
 
-## 🚀 Instalación
-
-```bash
-git clone https://github.com/TU_USUARIO/TU_REPO.git
-cd TU_REPO
-composer install
-cp .env.example .env
-php artisan key:generate
-php artisan migrate
-php artisan storage:link
-php artisan serve
