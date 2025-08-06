@@ -1,12 +1,10 @@
-@extends('layouts.app')
+@include('layouts.header')
 
-@section('title', 'Catálogo de productos')
+<h2 style="text-align: center; margin-top: 20px;">Catálogo de productos</h2>
 
-@section('content')
-    <h2>Catálogo de productos</h2>
-
+<div style="max-width: 1200px; margin: auto; padding: 20px;">
     @foreach($productos as $producto)
-        <div style="margin-bottom: 30px;">
+        <div style="margin-bottom: 40px; border-bottom: 1px solid #ddd; padding-bottom: 20px;">
             <h3>{{ $producto->nombre }}</h3>
 
             @if($producto->imagen_perfil)
@@ -15,7 +13,8 @@
 
             <p>{{ $producto->descripcion }}</p>
             <p><strong>Precio:</strong> ${{ $producto->precio }}</p>
-            <hr>
         </div>
     @endforeach
-@endsection
+</div>
+
+@include('layouts.footer')
