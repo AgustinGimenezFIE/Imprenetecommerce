@@ -22,12 +22,15 @@
 
     @foreach($productos as $producto)
         @php
-            // Construye la lista de imágenes: primero la principal y luego las adicionales
-            $imgs = collect($producto->imagenes_adicionales ?? []);
-            if ($producto->imagen_perfil) {
-                $imgs->prepend($producto->imagen_perfil);
-            }
-        @endphp
+    // adicionales: última primero
+    $imgs = collect($producto->imagenes_adicionales ?? [])->reverse()->values();
+
+    // principal siempre primera
+    if ($producto->imagen_perfil) {
+        $imgs->prepend($producto->imagen_perfil);
+    }
+@endphp
+
 
         <div class="card">
             <h2>{{ $producto->nombre }}</h2>

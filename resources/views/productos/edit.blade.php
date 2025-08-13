@@ -37,21 +37,21 @@
             <input type="file" name="imagen_perfil" accept="image/*"><br><br>
 
             {{-- Imágenes adicionales (actuales + eliminar) --}}
-            <label>Imágenes adicionales actuales:</label><br>
-            @if(!empty($producto->imagenes_adicionales))
-                @foreach ($producto->imagenes_adicionales as $img)
-                    <div class="thumb">
-                        <img src="{{ asset('storage/' . $img) }}" alt="Imagen adicional">
-                        <label>
-                            <input type="checkbox" name="eliminar[]" value="{{ $img }}">
-                            Eliminar
-                        </label>
-                    </div>
-                @endforeach
-                <br style="clear:both;"><br>
-            @else
-                <em>No hay imágenes adicionales</em><br><br>
-            @endif
+<label>Imágenes adicionales actuales:</label><br>
+@if(!empty($producto->imagenes_adicionales))
+    @foreach (collect($producto->imagenes_adicionales)->reverse()->values() as $img)
+        <div class="thumb">
+            <img src="{{ asset('storage/' . $img) }}" alt="Imagen adicional">
+            <label>
+                <input type="checkbox" name="eliminar[]" value="{{ $img }}">
+                Eliminar
+            </label>
+        </div>
+    @endforeach
+    <br style="clear:both;"><br>
+@else
+    <em>No hay imágenes adicionales</em><br><br>
+@endif
 
             {{-- Agregar más imágenes --}}
             <label>Agregar más imágenes (se suman a las existentes):</label><br>

@@ -36,12 +36,18 @@
   <div class="grid">
     @foreach($productos as $i => $p)
       @php
-        // arma el array de imágenes (urls absolutas) => primero la principal
-        $arr = collect($p->imagenes_adicionales ?? []);
-        if ($p->imagen_perfil) { $arr->prepend($p->imagen_perfil); }
-        $arr = $arr->map(fn($r) => asset('storage/'.$r))->values();
-        $cover = $arr[0] ?? asset('placeholder.jpg');
-      @endphp
+    // adicionales: última primero
+    $adicionales = collect($p->imagenes_adicionales ?? [])->reverse()->values();
+
+    // principal siempre primera
+    if ($p->imagen_perfil) {
+        $adicionales->prepend($p->imagen_perfil);
+    }
+
+    // pasar a URLs
+    $arr   = $adicionales->map(fn($r) => asset('storage/'.$r))->values();
+    $cover = $arr[0] ?? asset('placeholder.jpg');
+@endphp
 
       <button
         type="button"
