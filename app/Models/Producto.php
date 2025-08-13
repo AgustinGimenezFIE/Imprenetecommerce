@@ -13,9 +13,13 @@ class Producto extends Model
         'precio',
         'imagen_perfil',
         'imagenes_adicionales',
+        'ocultar_precio',
+        'talla_foto',
+        'colores_foto',
     ];
 
     protected $casts = [
         'imagenes_adicionales' => 'array',
+        'ocultar_precio' => 'boolean',
     ];
 }

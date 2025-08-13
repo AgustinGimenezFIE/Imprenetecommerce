@@ -28,35 +28,42 @@
   .prev{left:8px}.next{right:8px}
   .price{font-weight:700}
   /* forzamos a que nuestro modal se muestre, aunque Bootstrap tenga .modal {display:none} */
-.modal-backdrop.open .modal { display: block !important; position: relative; }
+  .modal-backdrop.open .modal { display: block !important; position: relative; }
 
+  .pill{display:inline-block; padding:6px 10px; background:#222; border-radius:10px; margin-right:8px; font-size:.9rem}
 </style>
 
 <div class="catalogo">
   <div class="grid">
     @foreach($productos as $i => $p)
       @php
-    // adicionales: última primero
-    $adicionales = collect($p->imagenes_adicionales ?? [])->reverse()->values();
+        // adicionales: última primero
+        $adicionales = collect($p->imagenes_adicionales ?? [])->reverse()->values();
+        // principal siempre primera
+        if ($p->imagen_perfil) { $adicionales->prepend($p->imagen_perfil); }
+        // urls absolutas
+        $arr = $adicionales->map(fn($r) => asset('storage/'.$r))->values();
 
-    // principal siempre primera
-    if ($p->imagen_perfil) {
-        $adicionales->prepend($p->imagen_perfil);
-    }
+        $cover = $arr[0] ?? asset('placeholder.jpg');
 
-    // pasar a URLs
-    $arr   = $adicionales->map(fn($r) => asset('storage/'.$r))->values();
-    $cover = $arr[0] ?? asset('placeholder.jpg');
-@endphp
+        // precio: ocultar si marcaron "no mostrar"
+        $precio = $p->ocultar_precio ? '' : number_format($p->precio, 2);
+
+        // talles / colores (opcionales)
+        $tallesUrl  = $p->talla_foto   ? asset('storage/'.$p->talla_foto)   : '';
+        $coloresUrl = $p->colores_foto ? asset('storage/'.$p->colores_foto) : '';
+      @endphp
 
       <button
         type="button"
         class="tile"
         data-index="{{ $i }}"
         data-nombre="{{ $p->nombre }}"
-        data-precio="{{ number_format($p->precio, 2) }}"
+        data-precio="{{ $precio }}"
         data-desc="{{ trim(preg_replace('/\s+/', ' ', $p->descripcion ?? '')) }}"
         data-images='@json($arr)'
+        data-talles="{{ $tallesUrl }}"
+        data-colores="{{ $coloresUrl }}"
         aria-label="Ver {{ $p->nombre }}"
       >
         <img src="{{ $cover }}" alt="{{ $p->nombre }}" loading="lazy">
@@ -79,8 +86,12 @@
       <button class="navbtn next" id="mNext" aria-label="Siguiente">›</button>
     </div>
     <div class="modal-info">
-      <div class="price">$ <span id="mPrecio"></span></div>
+      <div class="price" id="mPriceWrap">$ <span id="mPrecio"></span></div>
       <p id="mDesc" style="opacity:.85"></p>
+      <div id="extraBtns" style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+        <button id="btnTalles" class="xbtn pill" style="display:none;">Ver talles</button>
+        <button id="btnColores" class="xbtn pill" style="display:none;">Ver colores</button>
+      </div>
     </div>
   </div>
 </div>
@@ -90,19 +101,25 @@
   const cards = Array.from(document.querySelectorAll('.tile'));
   const items = cards.map(c => ({
     nombre: c.dataset.nombre,
-    precio: c.dataset.precio,
+    precio: c.dataset.precio,   // podría venir vacío si está oculto
     desc:   c.dataset.desc,
-    images: JSON.parse(c.dataset.images || '[]')
+    images: JSON.parse(c.dataset.images || '[]'),
+    talles: c.dataset.talles || '',
+    colores: c.dataset.colores || ''
   }));
 
   const backdrop = document.getElementById('modalBackdrop');
   const mNombre  = document.getElementById('mNombre');
   const mPrecio  = document.getElementById('mPrecio');
+  const mPriceWrap = document.getElementById('mPriceWrap');
   const mDesc    = document.getElementById('mDesc');
   const mImg     = document.getElementById('mImg');
   const mClose   = document.getElementById('mClose');
   const mPrev    = document.getElementById('mPrev');
   const mNext    = document.getElementById('mNext');
+
+  const btnTalles  = document.getElementById('btnTalles');
+  const btnColores = document.getElementById('btnColores');
 
   let prod = 0;  // índice de producto
   let foto = 0;  // índice de foto dentro de ese producto
@@ -111,15 +128,28 @@
     const it = items[prod]; if(!it) return;
     const urls = it.images || [];
     mNombre.textContent = it.nombre || '';
-    mPrecio.textContent = it.precio || '';
     mDesc.textContent   = it.desc || '';
+
+    // precio: mostrar u ocultar
+    if (it.precio && it.precio.trim() !== '') {
+      mPrecio.textContent = it.precio;
+      mPriceWrap.style.display = '';
+    } else {
+      mPriceWrap.style.display = 'none';
+    }
+
+    // imagen
     mImg.src = urls[foto] || '';
     mImg.alt = it.nombre || '';
 
-    // mostrar/ocultar flechas si solo hay 1 imagen
+    // nav flechas
     const many = urls.length > 1;
     mPrev.style.display = many ? '' : 'none';
     mNext.style.display = many ? '' : 'none';
+
+    // botones extra
+    btnTalles.style.display  = it.talles  ? '' : 'none';
+    btnColores.style.display = it.colores ? '' : 'none';
   }
 
   function openModal(pIdx){
@@ -135,14 +165,8 @@
     backdrop.setAttribute('aria-hidden', 'true');
     document.documentElement.style.overflow = '';
   }
-  function next(){
-    const n = (items[prod].images || []).length;
-    if (n) { foto = (foto + 1) % n; render(); }
-  }
-  function prev(){
-    const n = (items[prod].images || []).length;
-    if (n) { foto = (foto - 1 + n) % n; render(); }
-  }
+  function next(){ const n = (items[prod].images || []).length; if (n) { foto = (foto + 1) % n; render(); } }
+  function prev(){ const n = (items[prod].images || []).length; if (n) { foto = (foto - 1 + n) % n; render(); } }
 
   cards.forEach((card,i)=> card.addEventListener('click', () => openModal(i)));
   mClose.addEventListener('click', closeModal);
@@ -154,6 +178,16 @@
     if(e.key === 'Escape') closeModal();
     if(e.key === 'ArrowRight') next();
     if(e.key === 'ArrowLeft') prev();
+  });
+
+  // Ver talles / colores = cambiar imagen del modal a esas URLs
+  btnTalles?.addEventListener('click', () => {
+    const it = items[prod];
+    if (it?.talles) { mImg.src = it.talles; }
+  });
+  btnColores?.addEventListener('click', () => {
+    const it = items[prod];
+    if (it?.colores) { mImg.src = it.colores; }
   });
 </script>
 
