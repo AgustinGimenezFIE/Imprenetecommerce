@@ -57,19 +57,28 @@
 <body>
     <div class="topbar">
         <h1 style="flex:1">Administrar productos</h1>
+        <a class="btn secondary" href="{{ route('color_sets.index') }}">🎨 Sets de colores</a>
         <a class="btn" href="{{ route('productos.create') }}">➕ Agregar producto</a>
     </div>
 
     <div class="grid">
     @foreach($productos as $producto)
         @php
-            // adicionales: última primero
+            // Carrusel: última adicional primero y la principal al frente
             $imgs = collect($producto->imagenes_adicionales ?? [])->reverse()->values();
-            // principal siempre primera
             if ($producto->imagen_perfil) { $imgs->prepend($producto->imagen_perfil); }
 
-            $talles = $producto->talla_foto ? asset('storage/'.$producto->talla_foto) : null;
-            $colores = $producto->colores_foto ? asset('storage/'.$producto->colores_foto) : null;
+            // URLs auxiliares
+            $tallesUrl = $producto->talla_foto ? asset('storage/'.$producto->talla_foto) : null;
+
+            // Colores: prioridad archivo propio, si no, el del set compartido
+            if (!empty($producto->colores_foto)) {
+                $coloresUrl = asset('storage/'.$producto->colores_foto);
+            } elseif (!empty($producto->colorSet) && !empty($producto->colorSet->imagen)) {
+                $coloresUrl = asset('storage/'.$producto->colorSet->imagen);
+            } else {
+                $coloresUrl = null;
+            }
         @endphp
 
         <div class="card">
@@ -83,8 +92,8 @@
                     @endif
                     <span class="badge">ID #{{ $producto->id }}</span>
                     <span class="badge">{{ $imgs->count() }} foto{{ $imgs->count() === 1 ? '' : 's' }}</span>
-                    @if($talles)<span class="badge">Talles</span>@endif
-                    @if($colores)<span class="badge">Colores</span>@endif
+                    @if($tallesUrl)<span class="badge">Talles</span>@endif
+                    @if($coloresUrl)<span class="badge">Colores</span>@endif
                 </div>
             </div>
 
@@ -113,7 +122,8 @@
             @endif
 
             <div class="meta">
-                <div class="price">Precio: ${{ number_format($producto->precio, 2) }}
+                <div class="price">
+                    Precio: ${{ number_format($producto->precio, 2) }}
                     @if($producto->ocultar_precio)
                         <span class="muted"> (no se muestra al público)</span>
                     @endif
@@ -126,11 +136,11 @@
             </div>
 
             <div class="extras">
-                @if($talles)
-                    <button class="xbtn show-talles" data-url="{{ $talles }}">Ver talles</button>
+                @if($tallesUrl)
+                    <button class="xbtn show-talles" data-url="{{ $tallesUrl }}">Ver talles</button>
                 @endif
-                @if($colores)
-                    <button class="xbtn show-colores" data-url="{{ $colores }}">Ver colores</button>
+                @if($coloresUrl)
+                    <button class="xbtn show-colores" data-url="{{ $coloresUrl }}">Ver colores</button>
                 @endif
             </div>
 
@@ -164,7 +174,6 @@
     <script>
     // Carousel
     document.querySelectorAll('.carousel').forEach(function(c){
-        // ancho dinámico según card
         const W = c.clientWidth || 240;
         c.dataset.width = W;
 
@@ -172,34 +181,25 @@
         const imgs  = track ? track.querySelectorAll('img.main') : [];
         const prev  = c.querySelector('.prev');
         const next  = c.querySelector('.next');
-        const thumbs= c.parentElement.querySelectorAll('.thumbs img'); // fuera del .carousel
+        const thumbs= c.parentElement.querySelectorAll('.thumbs img');
         let i = 0;
 
         function update(){
-            track.style.transform = 'translateX(' + (-i * W) + 'px)';
-            thumbs.forEach(t => {
-                const active = Number(t.dataset.index) === i;
-                t.classList.toggle('active', active);
-            });
+            track.style.transform = 'translateX(' + (-i * (c.clientWidth || W)) + 'px)';
+            thumbs.forEach(t => t.classList.toggle('active', Number(t.dataset.index) === i));
         }
 
         prev?.addEventListener('click', ()=>{ i = (i - 1 + imgs.length) % imgs.length; update(); });
         next?.addEventListener('click', ()=>{ i = (i + 1) % imgs.length; update(); });
         thumbs.forEach(t => t.addEventListener('click', ()=>{ i = Number(t.dataset.index); update(); }));
 
-        // Si cambia el tamaño, re-calcular W
-        window.addEventListener('resize', ()=>{
-            const newW = c.clientWidth || W;
-            c.dataset.width = newW;
-            update();
-        });
-
+        window.addEventListener('resize', update);
         update();
     });
 
     // Lightbox para talles/colores
-    const admbox = document.getElementById('admbox');
-    const abImg = document.getElementById('abImg');
+    const admbox  = document.getElementById('admbox');
+    const abImg   = document.getElementById('abImg');
     const abClose = document.getElementById('abClose');
 
     document.querySelectorAll('.show-talles, .show-colores').forEach(btn=>{

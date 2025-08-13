@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductoController; // Importá el controlador
+use App\Http\Controllers\ColorSetController;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,4 +26,8 @@ Route::prefix('admin')->group(function () {
     Route::get('/{producto}/edit', [ProductoController::class, 'edit'])->name('productos.edit');
     Route::put('/{producto}', [ProductoController::class, 'update'])->name('productos.update');
     Route::delete('/{producto}', [ProductoController::class, 'destroy'])->name('productos.destroy');
+    Route::get('/color-sets', [ColorSetController::class, 'index'])->name('color_sets.index');
+    Route::get('/color-sets/create', [ColorSetController::class, 'create'])->name('color_sets.create');
+    Route::post('/color-sets', [ColorSetController::class, 'store'])->name('color_sets.store');
+    Route::delete('/color-sets/{colorSet}', [ColorSetController::class, 'destroy'])->name('color_sets.destroy');
 });

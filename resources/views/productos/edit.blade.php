@@ -1,122 +1,170 @@
+<!-- resources/views/productos/edit.blade.php -->
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>Editar Producto</title>
-    <style>
-        .thumb { display:inline-block; margin:6px; text-align:center; }
-        .thumb img { display:block; width:110px; height:110px; object-fit:cover; border-radius:8px; }
-        .thumb label { display:block; margin-top:4px; font-size:.9rem; }
-        .hint{font-size:.9rem; opacity:.8}
-        .row{margin-bottom:14px}
-    </style>
+  <meta charset="utf-8">
+  <title>Editar producto</title>
+  <style>
+    :root{ --border:#e5e7eb; --muted:#6b7280; --radius:12px; }
+    *{box-sizing:border-box}
+    body{font-family:system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial; margin:0; padding:24px; color:#111; background:#fafafa}
+    h1{margin:0 0 14px}
+    .topbar{display:flex; gap:10px; align-items:center; margin-bottom:14px}
+    .btn{display:inline-flex; align-items:center; gap:6px; background:#111; color:#fff; padding:9px 12px; border-radius:10px; text-decoration:none; border:none; cursor:pointer}
+    .btn.secondary{ background:#f3f4f6; color:#111 }
+    .page{max-width:980px; margin:0 auto}
+    .card{background:#fff; border:1px solid var(--border); border-radius:var(--radius); padding:16px}
+    .grid{display:grid; grid-template-columns:1fr 360px; gap:16px}
+    .field{margin-bottom:12px}
+    .label{display:block; font-weight:600; margin-bottom:6px}
+    .hint{font-size:.86rem; color:var(--muted)}
+    input[type="text"], input[type="number"], textarea, select{
+      width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; background:#fff; font:inherit;
+    }
+    textarea{min-height:86px; resize:vertical}
+    .check{display:flex; align-items:center; gap:8px; margin-top:6px}
+    .section-title{font-weight:700; margin:8px 0 10px}
+    .thumbs{display:flex; flex-wrap:wrap; gap:8px}
+    .thumb{width:90px; height:90px; border-radius:8px; overflow:hidden; border:1px solid var(--border); background:#f3f4f6; position:relative}
+    .thumb img{width:100%; height:100%; object-fit:cover; display:block}
+    .thumb .rm{position:absolute; left:6px; bottom:6px; background:#fff; border:1px solid var(--border); border-radius:6px; padding:2px 6px; font-size:.8rem}
+    .actions{display:flex; gap:10px; justify-content:flex-end; padding-top:10px}
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Editar producto</h2>
+<div class="page">
+  <div class="topbar">
+    <h1 style="flex:1">Editar producto</h1>
+    <a class="btn secondary" href="{{ route('color_sets.index') }}">🎨 Sets de colores</a>
+    <a class="btn secondary" href="{{ route('productos.index') }}">↩ Volver</a>
+  </div>
 
-        <form method="POST" action="{{ route('productos.update', $producto->id) }}" enctype="multipart/form-data">
-            @csrf
-            @method('PUT')
+  <form class="card" method="POST" action="{{ route('productos.update', $producto) }}" enctype="multipart/form-data">
+    @csrf
+    @method('PUT')
 
-            <div class="row">
-                <label>Nombre:</label><br>
-                <input type="text" name="nombre" value="{{ old('nombre', $producto->nombre) }}" required>
+    <div class="grid">
+      <div>
+        <div class="field">
+          <label class="label">Nombre</label>
+          <input type="text" name="nombre" value="{{ old('nombre', $producto->nombre) }}" required>
+        </div>
+
+        <div class="field">
+          <label class="label">Descripción</label>
+          <textarea name="descripcion">{{ old('descripcion', $producto->descripcion) }}</textarea>
+        </div>
+
+        <div class="field">
+          <label class="label">Precio</label>
+          <input type="number" step="0.01" name="precio" value="{{ old('precio', $producto->precio) }}" required>
+          <label class="check">
+            <input type="checkbox" name="ocultar_precio" value="1" {{ old('ocultar_precio', $producto->ocultar_precio) ? 'checked' : '' }}>
+            <span> No mostrar precio en público</span>
+          </label>
+        </div>
+
+        <div class="field">
+          <div class="section-title">Imagen principal</div>
+          @if($producto->imagen_perfil)
+            <div class="thumbs" style="margin-bottom:8px">
+              <div class="thumb"><img src="{{ asset('storage/'.$producto->imagen_perfil) }}" alt=""></div>
             </div>
+          @else
+            <div class="hint">Sin imagen principal</div>
+          @endif
+          <label class="label">Reemplazar (opcional)</label>
+          <input type="file" name="imagen_perfil" accept="image/*">
+        </div>
 
-            <div class="row">
-                <label>Descripción:</label><br>
-                <textarea name="descripcion">{{ old('descripcion', $producto->descripcion) }}</textarea>
+        <div class="field">
+          <div class="section-title">Imágenes adicionales</div>
+          @php $ad = collect($producto->imagenes_adicionales ?? [])->reverse()->values(); @endphp
+          @if($ad->count())
+            <div class="thumbs" style="margin-bottom:8px">
+              @foreach($ad as $ruta)
+                <div class="thumb">
+                  <img src="{{ asset('storage/'.$ruta) }}" alt="">
+                  <label class="rm">
+                    <input type="checkbox" name="eliminar[]" value="{{ $ruta }}"> Eliminar
+                  </label>
+                </div>
+              @endforeach
             </div>
+          @else
+            <div class="hint">No hay imágenes adicionales</div>
+          @endif
+          <label class="label">Agregar más (se suman a las existentes)</label>
+          <input type="file" name="imagenes_adicionales[]" multiple accept="image/*">
+        </div>
+      </div>
 
-            <div class="row">
-                <label>Precio:</label><br>
-                <input type="number" step="0.01" name="precio" value="{{ old('precio', $producto->precio) }}" required>
-                <div class="hint">Si marcás “No mostrar precio”, no se verá en el modal público.</div>
-                <label style="display:block; margin-top:6px;">
-                    <input type="checkbox" name="ocultar_precio" value="1" {{ old('ocultar_precio', $producto->ocultar_precio) ? 'checked' : '' }}>
-                    No mostrar precio
-                </label>
+      <div>
+        <div class="field">
+          <div class="section-title">Talles</div>
+          @if($producto->talla_foto)
+            <div class="thumbs" style="margin-bottom:6px">
+              <div class="thumb"><img src="{{ asset('storage/'.$producto->talla_foto) }}" alt=""></div>
             </div>
+            <label class="check">
+              <input type="checkbox" name="eliminar_talla" value="1"> Eliminar foto de talles
+            </label>
+          @else
+            <div class="hint">Sin foto de talles</div>
+          @endif
+          <label class="label">Reemplazar / subir</label>
+          <input type="file" name="talla_foto" accept="image/*">
+        </div>
 
-            {{-- Imagen principal --}}
-            <div class="row">
-                <label>Imagen principal actual:</label><br>
-                @if($producto->imagen_perfil)
-                    <img src="{{ asset('storage/' . $producto->imagen_perfil) }}" width="150" alt="Imagen principal"><br>
-                @else
-                    <em>Sin imagen principal</em><br>
-                @endif
-                <small>Reemplazar imagen principal (opcional):</small><br>
-                <input type="file" name="imagen_perfil" accept="image/*">
+        <div class="field" style="margin-top:16px">
+          <div class="section-title">Colores</div>
+          @if($producto->colores_foto)
+            <div class="thumbs" style="margin-bottom:6px">
+              <div class="thumb"><img src="{{ asset('storage/'.$producto->colores_foto) }}" alt=""></div>
             </div>
+            <label class="check">
+              <input type="checkbox" name="eliminar_colores" value="1"> Eliminar foto de colores
+            </label>
+          @else
+            <div class="hint">Sin foto de colores (puede usar set compartido)</div>
+          @endif
 
-            {{-- Foto de talles --}}
-            <div class="row">
-                <label>Foto de talles:</label><br>
-                @if($producto->talla_foto)
-                    <img src="{{ asset('storage/'.$producto->talla_foto) }}" width="150" alt="Talles"><br>
-                    <label><input type="checkbox" name="eliminar_talla" value="1"> Eliminar foto de talles</label><br>
-                @else
-                    <em>No hay foto de talles</em><br>
-                @endif
-                <small>Reemplazar / subir foto de talles (opcional):</small><br>
-                <input type="file" name="talla_foto" accept="image/*">
-            </div>
+          <label class="label" style="margin-top:8px">Reemplazar / subir</label>
+          <input type="file" name="colores_foto" accept="image/*">
 
-            {{-- Foto de colores --}}
-            <div class="row">
-                <label>Foto de colores:</label><br>
-                @if($producto->colores_foto)
-                    <img src="{{ asset('storage/'.$producto->colores_foto) }}" width="150" alt="Colores"><br>
-                    <label><input type="checkbox" name="eliminar_colores" value="1"> Eliminar foto de colores</label><br>
-                @else
-                    <em>No hay foto de colores</em><br>
-                @endif
-                <small>Reemplazar / subir foto de colores (opcional):</small><br>
-                <input type="file" name="colores_foto" accept="image/*">
-            </div>
-
-            {{-- Imágenes adicionales (actuales + eliminar) --}}
-            <div class="row">
-                <label>Imágenes adicionales actuales (últimas primero):</label><br>
-                @if(!empty($producto->imagenes_adicionales))
-                    @foreach (collect($producto->imagenes_adicionales)->reverse()->values() as $img)
-                        <div class="thumb">
-                            <img src="{{ asset('storage/' . $img) }}" alt="Imagen adicional">
-                            <label>
-                                <input type="checkbox" name="eliminar[]" value="{{ $img }}">
-                                Eliminar
-                            </label>
-                        </div>
-                    @endforeach
-                    <br style="clear:both;">
-                @else
-                    <em>No hay imágenes adicionales</em>
-                @endif
-            </div>
-
-            {{-- Agregar más imágenes --}}
-            <div class="row">
-                <label>Agregar más imágenes (se suman a las existentes):</label><br>
-                <input type="file" name="imagenes_adicionales[]" multiple accept="image/*">
-                <div class="hint">Las nuevas se agregan al final; al mostrar invertimos el orden para que la última quede segunda (después de la principal).</div>
-            </div>
-
-            <button type="submit">Actualizar producto</button>
-            <a href="{{ route('productos.index') }}" style="margin-left:8px;">Cancelar</a>
-        </form>
-
-        {{-- Errores de validación (opcional) --}}
-        @if ($errors->any())
-            <div style="color:#b00; margin-top:12px;">
-                <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
+          <div class="field" style="margin-top:10px">
+            <label class="label">O seleccionar set existente</label>
+            <select name="color_set_id">
+              <option value="">— Ninguno —</option>
+              @foreach($colorSets as $set)
+                <option value="{{ $set->id }}"
+                  {{ old('color_set_id', $producto->color_set_id) == $set->id ? 'selected' : '' }}>
+                  {{ $set->nombre }}
+                </option>
+              @endforeach
+            </select>
+            <div class="hint">Si el producto no tiene “foto de colores”, se usará la del set elegido.</div>
+          </div>
+        </div>
+      </div>
     </div>
+
+    <div class="actions">
+      <a class="btn secondary" href="{{ route('productos.index') }}">Cancelar</a>
+      <button class="btn" type="submit">💾 Actualizar</button>
+    </div>
+
+    @if ($errors->any())
+      <div style="color:#b91c1c; margin-top:8px">
+        <strong>Revisá estos campos:</strong>
+        <ul>
+          @foreach ($errors->all() as $error)
+            <li>{{ $error }}</li>
+          @endforeach
+        </ul>
+      </div>
+    @endif
+  </form>
+</div>
 </body>
 </html>

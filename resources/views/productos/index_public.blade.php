@@ -37,21 +37,29 @@
   <div class="grid">
     @foreach($productos as $i => $p)
       @php
-        // adicionales: última primero
+        // Carrusel: principal primero + adicionales (la última subida queda 2ª)
         $adicionales = collect($p->imagenes_adicionales ?? [])->reverse()->values();
-        // principal siempre primera
         if ($p->imagen_perfil) { $adicionales->prepend($p->imagen_perfil); }
-        // urls absolutas
         $arr = $adicionales->map(fn($r) => asset('storage/'.$r))->values();
-
         $cover = $arr[0] ?? asset('placeholder.jpg');
 
-        // precio: ocultar si marcaron "no mostrar"
+        // Precio (puede ocultarse)
         $precio = $p->ocultar_precio ? '' : number_format($p->precio, 2);
 
-        // talles / colores (opcionales)
-        $tallesUrl  = $p->talla_foto   ? asset('storage/'.$p->talla_foto)   : '';
-        $coloresUrl = $p->colores_foto ? asset('storage/'.$p->colores_foto) : '';
+        // Talles
+        $tallesUrl = $p->talla_foto ? asset('storage/'.$p->talla_foto) : '';
+
+        // Colores: PRIORIDAD producto > set compartido
+        if (!empty($p->colores_foto)) {
+            $coloresUrl = asset('storage/'.$p->colores_foto);
+        } elseif (!empty($p->colorSet) && !empty($p->colorSet->imagen)) {
+            $coloresUrl = asset('storage/'.$p->colorSet->imagen);
+        } else {
+            $coloresUrl = '';
+        }
+
+        // Descripción compacta
+        $desc = trim(preg_replace('/\s+/', ' ', $p->descripcion ?? ''));
       @endphp
 
       <button
@@ -60,7 +68,7 @@
         data-index="{{ $i }}"
         data-nombre="{{ $p->nombre }}"
         data-precio="{{ $precio }}"
-        data-desc="{{ trim(preg_replace('/\s+/', ' ', $p->descripcion ?? '')) }}"
+        data-desc="{{ $desc }}"
         data-images='@json($arr)'
         data-talles="{{ $tallesUrl }}"
         data-colores="{{ $coloresUrl }}"
@@ -97,40 +105,40 @@
 </div>
 
 <script>
-  // Lee todos los productos y sus imágenes
+  // Cargar items desde las tarjetas
   const cards = Array.from(document.querySelectorAll('.tile'));
   const items = cards.map(c => ({
-    nombre: c.dataset.nombre,
-    precio: c.dataset.precio,   // podría venir vacío si está oculto
-    desc:   c.dataset.desc,
-    images: JSON.parse(c.dataset.images || '[]'),
-    talles: c.dataset.talles || '',
+    nombre:  c.dataset.nombre,
+    precio:  c.dataset.precio,   // puede venir vacío si está oculto
+    desc:    c.dataset.desc,
+    images:  JSON.parse(c.dataset.images || '[]'),
+    talles:  c.dataset.talles || '',
     colores: c.dataset.colores || ''
   }));
 
-  const backdrop = document.getElementById('modalBackdrop');
-  const mNombre  = document.getElementById('mNombre');
-  const mPrecio  = document.getElementById('mPrecio');
+  const backdrop   = document.getElementById('modalBackdrop');
+  const mNombre    = document.getElementById('mNombre');
+  const mPrecio    = document.getElementById('mPrecio');
   const mPriceWrap = document.getElementById('mPriceWrap');
-  const mDesc    = document.getElementById('mDesc');
-  const mImg     = document.getElementById('mImg');
-  const mClose   = document.getElementById('mClose');
-  const mPrev    = document.getElementById('mPrev');
-  const mNext    = document.getElementById('mNext');
-
+  const mDesc      = document.getElementById('mDesc');
+  const mImg       = document.getElementById('mImg');
+  const mClose     = document.getElementById('mClose');
+  const mPrev      = document.getElementById('mPrev');
+  const mNext      = document.getElementById('mNext');
   const btnTalles  = document.getElementById('btnTalles');
   const btnColores = document.getElementById('btnColores');
 
-  let prod = 0;  // índice de producto
-  let foto = 0;  // índice de foto dentro de ese producto
+  let prod = 0;  // índice del producto
+  let foto = 0;  // índice de la foto dentro del producto
 
   function render(){
     const it = items[prod]; if(!it) return;
     const urls = it.images || [];
+
     mNombre.textContent = it.nombre || '';
     mDesc.textContent   = it.desc || '';
 
-    // precio: mostrar u ocultar
+    // Precio visible solo si viene con valor
     if (it.precio && it.precio.trim() !== '') {
       mPrecio.textContent = it.precio;
       mPriceWrap.style.display = '';
@@ -138,16 +146,16 @@
       mPriceWrap.style.display = 'none';
     }
 
-    // imagen
+    // Imagen actual
     mImg.src = urls[foto] || '';
     mImg.alt = it.nombre || '';
 
-    // nav flechas
+    // Flechas de navegación
     const many = urls.length > 1;
     mPrev.style.display = many ? '' : 'none';
     mNext.style.display = many ? '' : 'none';
 
-    // botones extra
+    // Botones extra
     btnTalles.style.display  = it.talles  ? '' : 'none';
     btnColores.style.display = it.colores ? '' : 'none';
   }
@@ -180,7 +188,7 @@
     if(e.key === 'ArrowLeft') prev();
   });
 
-  // Ver talles / colores = cambiar imagen del modal a esas URLs
+  // Mostrar talles / colores (reemplaza la imagen del modal)
   btnTalles?.addEventListener('click', () => {
     const it = items[prod];
     if (it?.talles) { mImg.src = it.talles; }
@@ -191,7 +199,7 @@
   });
 </script>
 
-{{-- Botón flotante de WhatsApp (una sola vez) --}}
+{{-- Botón flotante de WhatsApp --}}
 @php
   $waPhone = '5491166660040';
   $waText  = 'Hola, estuve viendo su sitio web. Quiero más información.';
