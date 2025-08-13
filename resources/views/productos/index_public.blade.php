@@ -1,3 +1,4 @@
+{{-- resources/views/productos/index_public.blade.php --}}
 @include('layouts.header')
 
 <h2 style="text-align:center;margin:16px 0;">Trabajos Realizados</h2>
@@ -22,29 +23,37 @@
   .modal-img{background:#000}
   .modal-img img{width:100%;height:70vh;max-height:78vh;object-fit:contain;display:block}
   .modal-info{padding:12px 16px;background:#111}
-  .modal{ display:block !important; position:relative; }
   .xbtn,.navbtn{border:none;background:transparent;color:#fff;font-size:22px;cursor:pointer;line-height:1}
   .navbtn{position:absolute;top:50%;transform:translateY(-50%);font-size:34px;padding:8px 10px;background:rgba(0,0,0,.35);border-radius:10px}
   .prev{left:8px}.next{right:8px}
   .price{font-weight:700}
+  /* forzamos a que nuestro modal se muestre, aunque Bootstrap tenga .modal {display:none} */
+.modal-backdrop.open .modal { display: block !important; position: relative; }
+
 </style>
 
 <div class="catalogo">
   <div class="grid">
     @foreach($productos as $i => $p)
-      @php $img = $p->imagen_perfil ? asset('storage/'.$p->imagen_perfil) : asset('placeholder.jpg'); @endphp
+      @php
+        // arma el array de imágenes (urls absolutas) => primero la principal
+        $arr = collect($p->imagenes_adicionales ?? []);
+        if ($p->imagen_perfil) { $arr->prepend($p->imagen_perfil); }
+        $arr = $arr->map(fn($r) => asset('storage/'.$r))->values();
+        $cover = $arr[0] ?? asset('placeholder.jpg');
+      @endphp
 
       <button
-        type="button"             {{-- <- IMPORTANTE --}}
+        type="button"
         class="tile"
         data-index="{{ $i }}"
         data-nombre="{{ $p->nombre }}"
         data-precio="{{ number_format($p->precio, 2) }}"
         data-desc="{{ trim(preg_replace('/\s+/', ' ', $p->descripcion ?? '')) }}"
-        data-img="{{ $img }}"
+        data-images='@json($arr)'
         aria-label="Ver {{ $p->nombre }}"
       >
-        <img src="{{ $img }}" alt="{{ $p->nombre }}" loading="lazy">
+        <img src="{{ $cover }}" alt="{{ $p->nombre }}" loading="lazy">
         <span class="tag">{{ $p->nombre }}</span>
       </button>
     @endforeach
@@ -71,36 +80,46 @@
 </div>
 
 <script>
+  // Lee todos los productos y sus imágenes
   const cards = Array.from(document.querySelectorAll('.tile'));
   const items = cards.map(c => ({
-    nombre: c.dataset.nombre, precio: c.dataset.precio,
-    desc: c.dataset.desc, img: c.dataset.img
+    nombre: c.dataset.nombre,
+    precio: c.dataset.precio,
+    desc:   c.dataset.desc,
+    images: JSON.parse(c.dataset.images || '[]')
   }));
 
   const backdrop = document.getElementById('modalBackdrop');
-  const mNombre = document.getElementById('mNombre');
-  const mPrecio = document.getElementById('mPrecio');
-  const mDesc   = document.getElementById('mDesc');
-  const mImg    = document.getElementById('mImg');
-  const mClose  = document.getElementById('mClose');
-  const mPrev   = document.getElementById('mPrev');
-  const mNext   = document.getElementById('mNext');
+  const mNombre  = document.getElementById('mNombre');
+  const mPrecio  = document.getElementById('mPrecio');
+  const mDesc    = document.getElementById('mDesc');
+  const mImg     = document.getElementById('mImg');
+  const mClose   = document.getElementById('mClose');
+  const mPrev    = document.getElementById('mPrev');
+  const mNext    = document.getElementById('mNext');
 
-  let idx = 0;
+  let prod = 0;  // índice de producto
+  let foto = 0;  // índice de foto dentro de ese producto
 
-  function render(i){
-    const it = items[i];
-    if(!it) return;
-    idx = i;
+  function render(){
+    const it = items[prod]; if(!it) return;
+    const urls = it.images || [];
     mNombre.textContent = it.nombre || '';
     mPrecio.textContent = it.precio || '';
     mDesc.textContent   = it.desc || '';
-    mImg.src            = it.img || '';
-    mImg.alt            = it.nombre || '';
+    mImg.src = urls[foto] || '';
+    mImg.alt = it.nombre || '';
+
+    // mostrar/ocultar flechas si solo hay 1 imagen
+    const many = urls.length > 1;
+    mPrev.style.display = many ? '' : 'none';
+    mNext.style.display = many ? '' : 'none';
   }
 
-  function openModal(i){
-    render(i);
+  function openModal(pIdx){
+    prod = pIdx;
+    foto = 0;
+    render();
     backdrop.classList.add('open');
     backdrop.setAttribute('aria-hidden', 'false');
     document.documentElement.style.overflow = 'hidden';
@@ -110,8 +129,14 @@
     backdrop.setAttribute('aria-hidden', 'true');
     document.documentElement.style.overflow = '';
   }
-  function next(){ render( (idx + 1) % items.length ); }
-  function prev(){ render( (idx - 1 + items.length) % items.length ); }
+  function next(){
+    const n = (items[prod].images || []).length;
+    if (n) { foto = (foto + 1) % n; render(); }
+  }
+  function prev(){
+    const n = (items[prod].images || []).length;
+    if (n) { foto = (foto - 1 + n) % n; render(); }
+  }
 
   cards.forEach((card,i)=> card.addEventListener('click', () => openModal(i)));
   mClose.addEventListener('click', closeModal);
@@ -126,25 +151,11 @@
   });
 </script>
 
-{{-- Botón flotante de WhatsApp --}}
+{{-- Botón flotante de WhatsApp (una sola vez) --}}
 @php
-    $waPhone = '5491166660040';
-    $waText  = 'Hola, estuve viendo su sitio web. Quiero más información.';
-    $waUrl   = 'https://api.whatsapp.com/send?phone='.$waPhone.'&text='.rawurlencode($waText);
-@endphp
-
-<a href="{{ $waUrl }}" class="whatsapp-float" target="_blank" rel="noopener" aria-label="WhatsApp">
-    <!-- SVG del ícono -->
-</a>
-
-<style>
-/* Estilos del botón flotante */
-</style>
-{{-- Botón flotante de WhatsApp --}}
-@php
-    $waPhone = '5491166660040';
-    $waText  = 'Hola, estuve viendo su sitio web. Quiero más información.';
-    $waUrl   = 'https://api.whatsapp.com/send?phone='.$waPhone.'&text='.rawurlencode($waText);
+  $waPhone = '5491166660040';
+  $waText  = 'Hola, estuve viendo su sitio web. Quiero más información.';
+  $waUrl   = 'https://api.whatsapp.com/send?phone='.$waPhone.'&text='.rawurlencode($waText);
 @endphp
 
 <a href="{{ $waUrl }}" class="whatsapp-float" target="_blank" rel="noopener" aria-label="WhatsApp">
@@ -153,22 +164,16 @@
   </svg>
 </a>
 
-
-</a>
-
 <style>
-.whatsapp-float{
-  position: fixed; right:18px; bottom:18px;
-  width:56px; height:56px; border-radius:50%;
-  background:#25D366; box-shadow:0 8px 20px rgba(0,0,0,.2);
-  display:flex; align-items:center; justify-content:center;
-  z-index:1060; text-decoration:none; transition:transform .15s, box-shadow .15s;
-}
-.whatsapp-float:hover{ transform:scale(1.05); box-shadow:0 10px 24px rgba(0,0,0,.25); }
-
-/* 🔧 evita el recorte por línea de base y da margen interno */
-.whatsapp-float .wa-icon{
-  width:28px; height:28px; display:block;
-}
+  .whatsapp-float{
+    position: fixed; right:18px; bottom:18px;
+    width:56px; height:56px; border-radius:50%;
+    background:#25D366; box-shadow:0 8px 20px rgba(0,0,0,.2);
+    display:flex; align-items:center; justify-content:center;
+    z-index:1060; text-decoration:none; transition:transform .15s, box-shadow .15s;
+  }
+  .whatsapp-float:hover{ transform:scale(1.05); box-shadow:0 10px 24px rgba(0,0,0,.25); }
+  .whatsapp-float .wa-icon{ width:28px; height:28px; display:block; }
 </style>
+
 @include('layouts.footer')

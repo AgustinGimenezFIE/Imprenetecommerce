@@ -65,47 +65,53 @@ class ProductoController extends Controller
     }
 
     public function update(Request $request, $id)
-    {
-        $request->validate([
-            'nombre' => 'required|string|max:255',
-            'descripcion' => 'nullable|string',
-            'precio' => 'required|numeric',
-            'imagen_perfil' => 'nullable|image|mimes:jpg,jpeg,png',
-            'imagenes_adicionales.*' => 'nullable|image|mimes:jpg,jpeg,png'
-        ]);
+{
+    $request->validate([
+        'nombre' => 'required|string|max:255',
+        'descripcion' => 'nullable|string',
+        'precio' => 'required|numeric',
+        'imagen_perfil' => 'nullable|image|mimes:jpg,jpeg,png',
+        'imagenes_adicionales.*' => 'nullable|image|mimes:jpg,jpeg,png'
+    ]);
 
-        $producto = Producto::findOrFail($id);
+    $producto = Producto::findOrFail($id);
 
-        $producto->nombre = $request->nombre;
-        $producto->descripcion = $request->descripcion;
-        $producto->precio = $request->precio;
+    $producto->nombre = $request->nombre;
+    $producto->descripcion = $request->descripcion;
+    $producto->precio = $request->precio;
 
-        if ($request->hasFile('imagen_perfil')) {
-            if ($producto->imagen_perfil) {
-                Storage::disk('public')->delete($producto->imagen_perfil);
-            }
-            $producto->imagen_perfil = $request->file('imagen_perfil')->store('productos', 'public');
+    // Imagen principal (reemplazar si suben una nueva)
+    if ($request->hasFile('imagen_perfil')) {
+        if ($producto->imagen_perfil) {
+            Storage::disk('public')->delete($producto->imagen_perfil);
         }
-
-        if ($request->hasFile('imagenes_adicionales')) {
-            if ($producto->imagenes_adicionales) {
-                foreach ($producto->imagenes_adicionales as $img) {
-                    Storage::disk('public')->delete($img);
-                }
-            }
-
-            $nuevas = [];
-            foreach ($request->file('imagenes_adicionales') as $img) {
-                $nuevas[] = $img->store('productos', 'public');
-            }
-
-            $producto->imagenes_adicionales = $nuevas;
-        }
-
-        $producto->save();
-
-        return redirect()->route('productos.index')->with('success', 'Producto actualizado correctamente.');
+        $producto->imagen_perfil = $request->file('imagen_perfil')->store('productos', 'public');
     }
+
+    // --- Eliminar individuales marcadas ---
+    $existentes = collect($producto->imagenes_adicionales ?? []);
+    $aEliminar = collect($request->input('eliminar', [])); // vienen como rutas
+
+    if ($aEliminar->isNotEmpty()) {
+        foreach ($aEliminar as $ruta) {
+            Storage::disk('public')->delete($ruta);
+        }
+        $existentes = $existentes->reject(fn($ruta) => in_array($ruta, $aEliminar->all()));
+    }
+
+    // --- Agregar nuevas (si llegan) ---
+    if ($request->hasFile('imagenes_adicionales')) {
+        foreach ($request->file('imagenes_adicionales') as $img) {
+            $existentes->push($img->store('productos', 'public'));
+        }
+    }
+
+    $producto->imagenes_adicionales = $existentes->values()->all();
+    $producto->save();
+
+    return redirect()->route('productos.index')->with('success', 'Producto actualizado correctamente.');
+}
+
 
     public function destroy($id)
     {
