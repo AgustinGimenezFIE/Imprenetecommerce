@@ -148,27 +148,39 @@
 @endphp
 
 <a href="{{ $waUrl }}" class="whatsapp-float" target="_blank" rel="noopener" aria-label="WhatsApp">
-  <svg class="wa-icon" viewBox="0 0 24 24" aria-hidden="true">
-    <path fill="#fff" d="M17.472 14.382c-.297-.149-1.758-.867-2.027-.967-.27-.099-.466-.149-.663.15-.198.297-.761.967-.934 1.166-.2.2-.4.23-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.607.134-.133.297-.347.446-.521.149-.174.198-.298.298-.497.099-.198.05-.372-.025-.521-.075-.149-.663-1.6-.909-2.192-.24-.579-.487-.5-.663-.51l-.567-.01c-.198 0-.521.074-.793.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.1 3.204 5.077 4.487.709.306 1.262.489 1.694.625.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.412.248-.694.248-1.289.173-1.412-.074-.123-.272-.198-.57-.347m-5.421 7.403h-.003a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.284c0-5.45 4.436-9.884 9.888-9.884a9.86 9.86 0 016.993 2.897 9.823 9.823 0 012.893 6.997c-.003 5.45-4.437 9.884-9.889 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.305-1.654a11.882 11.882 0 005.717 1.463h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
-  </svg>
-</a>
-
+  <!-- Ícono WhatsApp (SVG inline) -->
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="28" height="28" fill="white">
+    <path d="M16 .4C7.2.4.1 7.5.1 16.3c0 2.9.8 5.6 2.2 8l-1.5 5.5 5.7-1.5c2.3 1.3 5 2 7.8 2 8.8 0 15.9-7.1 15.9-15.9S24.8.4 16 .4zm0 29.1c-2.6 0-5.1-.7-7.3-2l-.5-.3-3.4.9.9-3.3-.3-.5c-1.4-2.1-2.1-4.6-2.1-7.1 0-7.3 5.9-13.2 13.2-13.2 3.5 0 6.8 1.4 9.3 3.9s3.9 5.8 3.9 9.3c0 7.3-5.9 13.3-13.3 13.3zm7.4-9.9c-.4-.2-2.3-1.1-2.6-1.2-.3-.1-.6-.2-.9.2-.3.4-1 1.2-1.3 1.4-.2.2-.4.2-.8.1s-1.5-.6-2.9-1.9c-1.1-1-1.9-2.2-2.1-2.5-.2-.4 0-.6.2-.8.2-.2.4-.5.6-.8.2-.3.3-.5.5-.8.2-.3.1-.6 0-.8-.1-.2-.9-2.1-1.3-2.9-.3-.7-.6-.6-.9-.6h-.8c-.3 0-.8.1-1.2.6s-1.6 1.6-1.6 3.9 1.6 4.5 1.8 4.8c.2.3 3.1 4.7 7.6 6.4 1.1.5 2 .8 2.7 1 .9.3 1.7.3 2.3.2.7-.1 2.3-.9 2.6-1.7.3-.8.3-1.5.2-1.7s-.4-.3-.8-.5z"/>
+</svg>
 
 </a>
 
 <style>
+/* Botón flotante fijo abajo a la derecha. Queda visible al hacer scroll. */
 .whatsapp-float{
-  position: fixed; right:18px; bottom:18px;
-  width:56px; height:56px; border-radius:50%;
-  background:#25D366; box-shadow:0 8px 20px rgba(0,0,0,.2);
-  display:flex; align-items:center; justify-content:center;
-  z-index:1060; text-decoration:none; transition:transform .15s, box-shadow .15s;
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  width: 56px; height: 56px;
+  background: #25D366;
+  color: #fff;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 8px 20px rgba(0,0,0,.2);
+  z-index: 1060; /* por encima del footer y navbar */
+  text-decoration: none;
+  transition: transform .15s ease, box-shadow .15s ease;
 }
-.whatsapp-float:hover{ transform:scale(1.05); box-shadow:0 10px 24px rgba(0,0,0,.25); }
-
-/* 🔧 evita el recorte por línea de base y da margen interno */
-.whatsapp-float .wa-icon{
-  width:28px; height:28px; display:block;
+.whatsapp-float:hover{
+  transform: scale(1.05);
+  box-shadow: 0 10px 24px rgba(0,0,0,.25);
+}
+/* Ajuste responsive */
+@media (max-width: 575px){
+  .whatsapp-float{ right: 14px; bottom: 14px; width: 52px; height: 52px; }
 }
 </style>
+{{-- Fin botón flotante --}}
+
+
 @include('layouts.footer')

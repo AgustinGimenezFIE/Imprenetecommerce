@@ -1,7 +1,7 @@
 </main>
 
 <!-- Footer -->
-<footer class="bg-dark text-white mt-5 pt-5">
+<footer class="bg-white text-dark mt-5 pt-5">
     <div class="container">
 
        <!-- Mapa -->
@@ -21,15 +21,15 @@
         <div class="text-center text-md-start">
             <p>📍 Sánchez 2053, CABA</p>
             <p>
-                📧 <a href="mailto:imprenetventa@gmail.com" class="text-white text-decoration-none">imprenetventa@gmail.com</a> |
-                📱 <a class="text-white text-decoration-none" href="https://wa.me/5491166660040">1166660040</a>
+                📧 <a href="mailto:imprenetventa@gmail.com" class="text-dark text-decoration-none">imprenetventa@gmail.com</a> |
+                📱 <a class="text-dark text-decoration-none" href="https://wa.me/5491166660040">1166660040</a>
             </p>
             <p>
-                <a class="text-white text-decoration-none" href="https://www.instagram.com/imprenet" target="_blank">
+                <a class="text-dark text-decoration-none" href="https://www.instagram.com/imprenet" target="_blank">
                     @imprenet
                 </a>
                 |
-                <a class="text-white text-decoration-none" href="https://maps.app.goo.gl/ZjnZYjC3BWDUmKcc6" target="_blank">
+                <a class="text-dark text-decoration-none" href="https://maps.app.goo.gl/ZjnZYjC3BWDUmKcc6" target="_blank">
                     Ver en Google Maps
                 </a>
             </p>

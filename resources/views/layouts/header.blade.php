@@ -10,21 +10,24 @@
 </head>
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
         <div class="container-fluid">
-            <a class="navbar-brand" href="{{ url('/') }}">Imprenet</a>
+            <a class="navbar-brand" href="{{ url('/') }}">
+    <img src="{{ asset('images/logo.png') }}" alt="Imprenet" height="40">
+</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url('/') }}">Inicio</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('productos.index') }}">Admin</a>
-                    </li>
-                </ul>
+    <li class="nav-item">
+        <a class="nav-link"
+           href="https://api.whatsapp.com/send?phone=5491166660040&text=Hola%20estuve%20viendo%20su%20Sitio%20Web%20Quiero%20mas%20informacion"
+           target="_blank" rel="noopener noreferrer">
+           Contacto
+        </a>
+    </li>
+</ul>
             </div>
         </div>
     </nav>
